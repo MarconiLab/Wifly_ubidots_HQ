@@ -5,15 +5,15 @@ Sending data from RTC temperature and Battery value to Ubidots with Wifly RN-XV 
 #Wires
   RNXV <----> Stalker
   
-  2    <----> PD6 
+  2 (data out)    <----> PD6 
   
-  3    <----> PD7
+  3 (data in)   <----> PD7
   
-  5    <----> PD8
+  5 (reset)    <----> PD8
   
-  12   <----> PA0
+  12 (CTS)   <----> PA0
   
-  16   <----> PA1
+  16 (RTS)   <----> PA1
 
 ##Libraries
 WiflyHQ modified
