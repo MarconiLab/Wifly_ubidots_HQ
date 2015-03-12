@@ -1,9 +1,17 @@
-Wifly_ubidots_HQ
+Wifly_ubidots_HQ Working
 ================
-Sending data from AI0 to Ubidots with Wifly RN-XV (wifly shield) connected to Stalker board
+Sending data from RTC temperature and Battery value to Ubidots with Wifly RN-XV (wifly shield) connected to Stalker board
+
+Wires
+RNXV <----> Stalker
+2              PD6 
+3              PD7
+5              PD8
+12             PA0
+16             PA1
 
 ##Libraries
-WiflyHQ
+WiflyHQ modified
 https://github.com/harlequin-tech/WiFlyHQ
 
 ##Hardware
