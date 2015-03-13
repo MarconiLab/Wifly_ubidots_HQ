@@ -231,8 +231,9 @@ void loop ()
       Serial.println(F("Failed to join wifi network\r\nTry again..."));
     }
   } 
-     writeUbidots(tempS, VARIABLEID1 );     //Send data in String format to the Ubidots function
-     writeUbidots(voltageS, VARIABLEID2 );     //Send data in String format to the Ubidots function
+     writeUbidots2(tempS, VARIABLEID1, voltageS, VARIABLEID2);     //Send data in String format to the Ubidots function
+     //writeUbidots(tempS, VARIABLEID1);     //Send data in String format to the Ubidots function
+     //writeUbidots(voltageS, VARIABLEID2 ); //Send data in String format to the Ubidots function
      wifly.sleep();
     digitalWrite(5, LOW);   
     
@@ -292,7 +293,6 @@ void INT0_ISR()
 //UBIDOTS
 void writeUbidots(String data, String VARID) {
   String dataString = "{\"value\":"+ data + "}";                  //Prepares the data in JSON format
-
   if (wifly.open(server, 80)) {                               //If connection is successful, then send this HTTP Request:
     Serial.println("Connected to " + String(VARID));
     wifly.print("POST /api/v1.6/variables/");                    //Specify URL, including the VARIABLE ID
@@ -304,14 +304,41 @@ void writeUbidots(String data, String VARID) {
     wifly.println("Content-Type: application/json");
     wifly.print("Content-Length: ");
     wifly.println(dataString.length());
-    //wifly.println("Connection: close");
     wifly.println();                                             //End of HTTP headers
-
     wifly.println(dataString);                                   //This is the actual value to send
-
     wifly.flush();
     wifly.close();
-//    return 1;
+  }
+  else {                                                          // If the connection wasn't possible, then:
+    if (wifly.crashed)
+    {
+      Serial.println(F("reset wifly..."));
+      digitalWrite(pin_wifly_reset, LOW);
+      delay(1000);
+      digitalWrite(pin_wifly_reset, HIGH);
+      init_wifi();
+    }
+  }
+}
+
+
+//UBIDOTS 2 variables
+void writeUbidots2(String data1, String VARID1, String data2, String VARID2) {
+    String dataString2 = "[{\"variable\": \""+ VARID1 +"\", \"value\":"+ data1 +"}, {\"variable\": \""+ VARID2 +"\", \"value\":"+ data2 +"}]";    //Prepares the data in JSON format
+    //Serial.println(dataString2);
+    if (wifly.open(server, 80)) {                               //If connection is successful, then send this HTTP Request:
+    Serial.println("Connected to Ubi");
+    wifly.println("POST /api/v1.6/collections/values HTTP/1.1");                    //Specify URL, including the VARIABLE ID
+    wifly.println("Host: things.ubidots.com");
+    wifly.print("X-Auth-Token: ");                               //Specify Authentication Token in headers
+    wifly.println(TOKEN);
+    wifly.println("Content-Type: application/json");
+    wifly.print("Content-Length: ");
+    wifly.println(dataString2.length());
+    wifly.println();                                             //End of HTTP headers
+    wifly.println(dataString2);                                   //This is the actual value to send
+    wifly.flush();
+    wifly.close();
   }
   else {                                                          // If the connection wasn't possible, then:
     if (wifly.crashed)
