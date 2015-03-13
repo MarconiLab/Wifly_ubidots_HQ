@@ -1,6 +1,6 @@
 Wifly_ubidots_LP Working
 ================
-Sending data from RTC temperature and Battery value to Ubidots with Wifly RN-XV (wifly shield) connected to Stalker board. Putting device in sleeping mode while not measuring.
+Sending data from RTC temperature and Battery value to Ubidots with Wifly RN-XV (wifly shield) connected to Stalker board. Putting device in sleeping mode while not measuring every SLPNG seconds defined in code.
 
 #Wires
   RNXV <----> Stalker
