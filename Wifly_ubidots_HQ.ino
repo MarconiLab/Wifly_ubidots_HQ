@@ -1,4 +1,4 @@
-//STALKER + WIFLY Low power
+//STALKER + WIFLY Low power, Sleeping every SLPNG seconds.
 //Send temp and batt to Ubidots
 //Autor: RJC
 
@@ -14,6 +14,36 @@
 #include <avr/power.h>
 #include <Wire.h>
 #include <DS3231.h>
+
+#define SLPNG           90   //sleeping time seconds
+
+/* Change these to match your WiFi network */
+const char mySSID[] = "MarconiLab";
+const char myPassword[] = "marconi-lab";
+#define AUTH      WIFLY_AUTH_WPA2_PSK     // or WIFLY_AUTH_WPA1, WIFLY_AUTH_WEP, WIFLY_AUTH_OPEN
+
+//Dots configuration
+#define TOKEN          "YRWsXoUOptheqaDFN2T58o65hyHe4m"  //Replace with your TOKEN
+#define VARIABLEID1    "539eec807625422e808b2a92"
+#define VARIABLEID2    "539eebc27625422e1a16dfd3"       //Replace with your variable ID
+char server[] = "things.ubidots.com";
+//char server[] = "192.168.88.119";  //TCPMON
+
+// Arduino       WiFly TX:6 RX:7
+SoftwareSerial wifiSerial(6,7);
+WiFly wifly;
+
+#define WIFLY_FLUSH_TIME  500    // larger than camera read time, avoiding flush too early
+#define WIFLY_FLUSH_SIZE  1460   // the max ethernet frame-size
+
+int pin_wifly_reset = 8;
+int pin_wifly_flow_cts = A0;
+int pin_wifly_flow_rts = A1;
+
+//join
+int wifi_join_cnt = 0;
+int wifi_offline_cnt = 0;
+
 
 //The following code is taken from sleep.h as Arduino Software v22 (avrgcc), in w32 does not have the latest sleep.h file
 #define sleep_bod_disable() \
@@ -48,33 +78,6 @@ int resetTimer = 0;
 // store error strings in flash to save RAM
 #define error(s) error_P(PSTR(s))
 
-/* Change these to match your WiFi network */
-const char mySSID[] = "MarconiLab";
-const char myPassword[] = "marconi-lab";
-#define AUTH      WIFLY_AUTH_WPA2_PSK     // or WIFLY_AUTH_WPA1, WIFLY_AUTH_WEP, WIFLY_AUTH_OPEN
-
-//Dots configuration
-#define TOKEN          "YRWsXoUOptheqaDFN2T58o65hyHe4m"  //Replace with your TOKEN
-#define VARIABLEID1    "539eec807625422e808b2a92"
-#define VARIABLEID2    "539eebc27625422e1a16dfd3"       //Replace with your variable ID
-char server[] = "things.ubidots.com";
-//char server[] = "192.168.88.119";  //TCPMON
-
-// Arduino       WiFly TX:6 RX:7
-SoftwareSerial wifiSerial(6,7);
-WiFly wifly;
-
-#define WIFLY_FLUSH_TIME  500    // larger than camera read time, avoiding flush too early
-#define WIFLY_FLUSH_SIZE  1460   // the max ethernet frame-size
-
-int pin_wifly_reset = 8;
-int pin_wifly_flow_cts = A0;
-int pin_wifly_flow_rts = A1;
-
-//join
-int wifi_join_cnt = 0;
-int wifi_offline_cnt = 0;
-
 char buf[80];
 
 void setup () 
@@ -102,7 +105,9 @@ void setup ()
      set_sleep_mode(SLEEP_MODE_PWR_DOWN);
  
      //Enable Interrupt 
-     RTC.enableInterrupts(EveryMinute); //interrupt at  EverySecond, EveryMinute, EveryHour
+     //Enable Interrupt 
+     DateTime start = RTC.now();
+     interruptTime = DateTime(start.get() + SLPNG); //Add SPLNG seconds in seconds to start time
      analogReference(INTERNAL); //Read battery status
      
 /*Wifly memory*/
@@ -238,9 +243,8 @@ void loop ()
     digitalWrite(5, LOW);   
     
     RTC.clearINTStatus(); //This function call is  a must to bring /INT pin HIGH after an interrupt.
+    RTC.enableInterrupts(interruptTime.hour(),interruptTime.minute(),interruptTime.second());    // set the interrupt at (h,m,s)
     attachInterrupt(0, INT0_ISR, LOW);  //Enable INT0 interrupt (as ISR disables interrupt). This strategy is required to handle LEVEL triggered interrupt
-    
-    
     ////////////////////////END : Application code //////////////////////////////// 
    
     
@@ -253,8 +257,8 @@ void loop ()
     sei();
         
     Serial.print("Sleeping ");
-    Serial.print("every");
-    Serial.println(" minute");
+    Serial.print(SLPNG/60.0);
+    Serial.print("m");
     delay(50); //This delay is required to allow print to complete
     //Shut down all peripherals like ADC before sleep. Refer Atmega328 manual
     power_all_disable(); //This shuts down ADC, TWI, SPI, Timers and USART
@@ -288,6 +292,7 @@ void INT0_ISR()
 {
   //Keep this as short as possible. Possibly avoid using function calls
     detachInterrupt(0); 
+    interruptTime = DateTime(interruptTime.get() + SLPNG);  //decide the time for next interrupt, configure next interrupt   
 }
 
 //UBIDOTS
