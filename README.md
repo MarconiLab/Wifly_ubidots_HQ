@@ -99,3 +99,6 @@ Contact Serialio when updating to a specific firmware version.
 
 Once updated
 wifly-EZX Ver: 4.41 Build: r1057, Jan 17 2014 10:23:54 on RN-171
+
+## No resposnse from RN-XV
+After some success posting to Ubidots (with some reset needed in the RN-XV) It was not responding and unable to force command mode over the serial input using “$$$”.
